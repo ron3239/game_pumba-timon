@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Играем!</title>
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="hud">
+            <div class="player-info">
+                <span id="playerNameDisplay"></span>
+                <div class="hp-bar">
+                    <div class="hp-fill"></div>
+                </div>
+                <span class="score">Гусениц: <span id="caterpillarCount">0</span></span>
+                <span class="timer">00:00</span>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <audio id="bgMusic" loop>
+        <source src="assets/sounds/background.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
