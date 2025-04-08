@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerNameInput = document.getElementById('playerName');
     const startBtn = document.getElementById('startBtn');
     const characters = document.querySelectorAll('.character');
-    let selectedCharacter = 'timon';
+    let selectedCharacter = 'timon'; // Значение по умолчанию
 
     // Анимация инструкций
     const instructions = document.querySelector('.instructions');
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         char.addEventListener('click', () => {
             characters.forEach(c => c.classList.remove('selected'));
             char.classList.add('selected');
-            selectedCharacter = char.dataset.char;
+            selectedCharacter = char.dataset.char; // Используем data-char
         });
     });
 

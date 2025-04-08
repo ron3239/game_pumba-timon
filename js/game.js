@@ -1,4 +1,4 @@
-// game.js - основной файл игры с текстурами
+// game.js - основной файл игры с текстурами и финишем
 
 // Инициализация игры
 const canvas = document.getElementById('gameCanvas');
@@ -16,21 +16,19 @@ const textures = {
     caterpillar: new Image(),
     platform: new Image(),
     background: new Image(),
+    flag: new Image() // Добавляем текстуру флага
 };
 
 // Загрузка текстур
 function loadTextures() {
-    // Загрузка текстур персонажей
     textures.player.timon.src = 'assets/images/timon.png';
     textures.player.pumbaa.src = 'assets/images/pumbaa.png';
-    
-    // Загрузка текстур врагов и окружения
     textures.hyena.src = 'assets/images/hyena.png';
     textures.caterpillar.src = 'assets/images/caterpillar.png';
     textures.platform.src = 'assets/images/platform.png';
     textures.background.src = 'assets/images/background.png';
+    textures.flag.src = 'assets/images/flag.png'; // Загружаем текстуру флага
     
-    // Ожидание загрузки всех текстур
     return Promise.all([
         new Promise(resolve => { textures.player.timon.onload = resolve; }),
         new Promise(resolve => { textures.player.pumbaa.onload = resolve; }),
@@ -38,8 +36,10 @@ function loadTextures() {
         new Promise(resolve => { textures.caterpillar.onload = resolve; }),
         new Promise(resolve => { textures.platform.onload = resolve; }),
         new Promise(resolve => { textures.background.onload = resolve; }),
+        new Promise(resolve => { textures.flag.onload = resolve; }) // Ожидаем загрузку флага
     ]);
 }
+
 
 // Игровые переменные
 const player = {
@@ -55,10 +55,7 @@ const player = {
     score: 0,
     velocityY: 0,
     facingRight: true,
-    invulnerable: false,
-    frame: 0,
-    frameCount: 0,
-    frames: 4 // количество кадров анимации
+    invulnerable: false
 };
 
 // Состояние игры
@@ -75,14 +72,23 @@ let keys = {};
 let bgMusic = document.getElementById('bgMusic');
 let gameStartTime = 0;
 let texturesLoaded = false;
-
 // Константы
 const GRAVITY = 0.5;
-const HYENA_SPAWN_RATE = 3000; // мс
-const CATERPILLAR_SPAWN_RATE = 5000; // мс
+const HYENA_SPAWN_RATE = 3000;
+const CATERPILLAR_SPAWN_RATE = 5000;
 const GROUND_LEVEL = 450;
 
-// Локальное хранилище результатов
+// Финиш
+const finish = {
+    x: 0,
+    y: GROUND_LEVEL - 100,
+    width: 50,
+    height: 100
+};
+
+
+
+// Локальное хранилище результатов (без изменений)
 const GameStorage = {
     saveResult(result) {
         const results = this.getResults();
@@ -109,7 +115,7 @@ const GameStorage = {
     }
 };
 
-// Генерация платформ
+// Генерация платформ с финишем
 function generatePlatforms() {
     platforms = [];
     for (let i = 0; i < 15; i++) {
@@ -120,9 +126,13 @@ function generatePlatforms() {
             height: 20
         });
     }
+    
+    // Устанавливаем позицию финиша после последней платформы
+    const lastPlatform = platforms[platforms.length - 1];
+    finish.x = lastPlatform.x + lastPlatform.width + 200;
 }
 
-// Основной игровой цикл
+// Основной игровой цикл (без изменений)
 function gameLoop() {
     if (gameOver) return;
     
@@ -134,7 +144,7 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Обновление игрового состояния
+// Обновление игрового состояния (без изменений)
 function updateGame() {
     handleMovement();
     
@@ -151,16 +161,9 @@ function updateGame() {
     spawnEnemies();
     checkCollisions();
     updateCamera();
-    
-    // Обновление анимации
-    player.frameCount++;
-    if (player.frameCount > 10) {
-        player.frame = (player.frame + 1) % player.frames;
-        player.frameCount = 0;
-    }
 }
 
-// Обработка движения игрока
+// Обработка движения игрока (без изменений)
 function handleMovement() {
     if (player.isHidden) return;
     
@@ -182,7 +185,7 @@ function handleMovement() {
     }
 }
 
-// Проверка столкновений с платформами
+// Проверка столкновений с платформами (без изменений)
 function checkPlatformCollision() {
     for (let platform of platforms) {
         if (player.x < platform.x + platform.width &&
@@ -197,7 +200,7 @@ function checkPlatformCollision() {
     }
 }
 
-// Спавн врагов
+// Спавн врагов (без изменений)
 function spawnEnemies() {
     const now = Date.now();
     
@@ -226,7 +229,7 @@ function spawnEnemies() {
     }
 }
 
-// Проверка столкновений с врагами
+// Проверка столкновений с врагами (без изменений)
 function checkCollisions() {
     // Гиены
     for (let i = 0; i < hyenas.length; i++) {
@@ -271,18 +274,22 @@ function checkCollisions() {
     }
 }
 
-// Обновление камеры
+// Обновление камеры с проверкой финиша
 function updateCamera() {
     if (player.x > canvas.width / 2) {
         cameraOffset = player.x - canvas.width / 2;
     }
     
-    if (player.x > platforms[platforms.length - 1].x + 300) {
+    // Проверка достижения финиша
+    if (player.x < finish.x + finish.width &&
+        player.x + player.width > finish.x &&
+        player.y < finish.y + finish.height &&
+        player.y + player.height > finish.y) {
         endGame(true);
     }
 }
 
-// Отрисовка игры
+// Отрисовка игры с финишем
 function drawGame() {
     // Очистка canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -316,6 +323,38 @@ function drawGame() {
         }
     });
     
+    // Финиш с флагом и надписью
+    if (finish.x - cameraOffset < canvas.width && finish.x - cameraOffset + finish.width > 0) {
+        // Отрисовка флага
+        const flagHeight = 120;
+        const flagWidth = 80;
+        ctx.drawImage(
+            textures.flag,
+            finish.x - cameraOffset + finish.width/2 - flagWidth/2,
+            finish.y - flagHeight,
+            flagWidth,
+            flagHeight
+        );
+
+        // Отрисовка надписи "ФИНИШ" над флагом
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(
+            finish.x - cameraOffset - 10,
+            finish.y - flagHeight - 30,
+            finish.width + 20,
+            30
+        );
+        
+        ctx.fillStyle = 'gold';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+            'ФИНИШ',
+            finish.x - cameraOffset + finish.width/2,
+            finish.y - flagHeight - 10
+        );
+    }
+    
     // Гусеницы с текстурой
     caterpillars.forEach(caterpillar => {
         if (caterpillar.x + caterpillar.width > cameraOffset && caterpillar.x < cameraOffset + canvas.width) {
@@ -328,7 +367,6 @@ function drawGame() {
     // Гиены с текстурой (всегда зеркальные)
     hyenas.forEach(hyena => {
         if (hyena.x + hyena.width > cameraOffset && hyena.x < cameraOffset + canvas.width) {
-            // Всегда отражаем изображение гиены
             ctx.save();
             ctx.scale(-1, 1);
             ctx.drawImage(textures.hyena, 
@@ -347,13 +385,11 @@ function drawGame() {
         }
         
         if (player.facingRight) {
-            // Берем только первый кадр (без анимации)
             ctx.drawImage(playerImg, 
                         0, 0, playerImg.width, playerImg.height,
                         player.x - cameraOffset, player.y, 
                         player.width, player.height);
         } else {
-            // Отражаем изображение если смотрит влево
             ctx.save();
             ctx.scale(-1, 1);
             ctx.drawImage(playerImg, 
@@ -367,7 +403,7 @@ function drawGame() {
     }
 }
 
-// Обновление таймера
+// Обновление таймера (без изменений)
 function updateTimer() {
     if (!isPaused && !gameOver) {
         gameTime = Math.floor((Date.now() - gameStartTime) / 1000);
@@ -378,14 +414,14 @@ function updateTimer() {
     }
 }
 
-// Обновление отображения HP
+// Обновление отображения HP (без изменений)
 function updateHPDisplay() {
     const hpFill = document.querySelector('.hp-fill');
     hpFill.style.width = `${player.HP}%`;
     hpFill.style.backgroundColor = player.HP > 50 ? '#4CAF50' : player.HP > 20 ? '#FFC107' : '#F44336';
 }
 
-// Завершение игры
+// Завершение игры (без изменений)
 function endGame(success) {
     gameOver = true;
     bgMusic.pause();
@@ -409,7 +445,7 @@ function endGame(success) {
     }, 1500);
 }
 
-// Обработка клавиш
+// Обработка клавиш (без изменений)
 document.addEventListener('keydown', (e) => {
     keys[e.key] = true;
     
@@ -427,13 +463,12 @@ document.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
-// Инициализация игры
+// Инициализация игры (без изменений)
 function initGame() {
     player.name = localStorage.getItem('playerName') || 'Игрок';
     player.character = localStorage.getItem('character') || 'timon';
     document.getElementById('playerNameDisplay').textContent = player.name;
     
-    // Загрузка текстур перед началом игры
     loadTextures().then(() => {
         texturesLoaded = true;
         generatePlatforms();
@@ -455,7 +490,6 @@ function initGame() {
         }, 1000);
     }).catch(error => {
         console.error('Ошибка загрузки текстур:', error);
-        // Если текстуры не загрузились, используем простые фигуры
         texturesLoaded = true;
         generatePlatforms();
         gameStartTime = Date.now();
