@@ -6,6 +6,7 @@
     <title>Приключения Тимон и Пумба</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/animations.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="start-screen">
@@ -19,14 +20,18 @@
         <div class="character-select">
             <div class="character" data-char="timon">
                 <img src="assets/images/timon.png" alt="Тимон">
+                <div class="character-name">Тимон</div>
             </div>
             <div class="character" data-char="pumbaa">
                 <img src="assets/images/pumbaa.png" alt="Пумба">
+                <div class="character-name">Пумба</div>
             </div>
         </div>
 
-        <input type="text" id="playerName" placeholder="Твое имя">
-        <button id="startBtn" disabled>Начать игру</button>
+        <div class="input-group">
+            <input type="text" id="playerName" placeholder="Твое имя" class="name-input">
+            <button id="startBtn" disabled class="start-button">Начать игру</button>
+        </div>
     </div>
 
     <script src="js/main.js"></script>

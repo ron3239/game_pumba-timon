@@ -5,29 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Результаты игры</title>
     <link rel="stylesheet" href="css/results.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="results-container">
-        <h2>Таблица лидеров</h2>
+        <div class="header">
+            <h2>Таблица лидеров</h2>
+            <div class="trophy"><i class="fas fa-trophy"></i></div>
+        </div>
         
-        <table id="leaderboard">
-            <thead>
-                <tr>
-                    <th>Место</th>
-                    <th>Имя</th>
-                    <th>Очки</th>
-                    <th>Время</th>
-                    <th>Гусениц</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Заполняется JavaScript -->
-            </tbody>
-        </table>
+        <div class="table-wrapper">
+            <table id="leaderboard">
+                <thead>
+                    <tr>
+                        <th>Место</th>
+                        <th>Имя</th>
+                        <th>Очки</th>
+                        <th>Время</th>
+                        <th>Гусениц</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Заполняется JavaScript -->
+                </tbody>
+            </table>
+        </div>
         
         <div class="buttons">
-            <button id="playAgain">Играть снова</button>
-            <button id="exportBtn">Экспорт результатов</button>
+            <button id="playAgain" class="action-btn">
+                <i class="fas fa-redo"></i> Играть снова
+            </button>
+            <button id="exportBtn" class="action-btn secondary">
+                <i class="fas fa-file-export"></i> Экспорт результатов
+            </button>
         </div>
     </div>
 

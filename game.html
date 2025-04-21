@@ -4,17 +4,30 @@
     <meta charset="UTF-8">
     <title>Играем!</title>
     <link rel="stylesheet" href="css/game.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="game-container">
         <div class="hud">
             <div class="player-info">
-                <span id="playerNameDisplay"></span>
-                <div class="hp-bar">
-                    <div class="hp-fill"></div>
+                <div class="player-name-container">
+                    <span id="playerNameDisplay"></span>
                 </div>
-                <span class="score">Гусениц: <span id="caterpillarCount">0</span></span>
-                <span class="timer">00:00</span>
+                <div class="stats-container">
+                    <div class="hp-container">
+                        <div class="hp-bar">
+                            <div class="hp-fill"></div>
+                        </div>
+                    </div>
+                    <div class="score-container">
+                        <span class="score-icon">🐛</span>
+                        <span class="score">Гусениц: <span id="caterpillarCount">0</span></span>
+                    </div>
+                    <div class="timer-container">
+                        <span class="timer-icon">⏱️</span>
+                        <span class="timer">00:00</span>
+                    </div>
+                </div>
             </div>
         </div>
         
