@@ -1,4 +1,4 @@
-// game.js - основной файл игры с текстурами и финишем
+// game.js - основной файл игры с шипами, реализованными через Canvas
 
 // Инициализация игры
 const canvas = document.getElementById('gameCanvas');
@@ -6,7 +6,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = 800;
 canvas.height = 500;
 
-// Текстуры
+// Текстуры (без шипов)
 const textures = {
     player: {
         timon: new Image(),
@@ -16,7 +16,7 @@ const textures = {
     caterpillar: new Image(),
     platform: new Image(),
     background: new Image(),
-    flag: new Image() // Добавляем текстуру флага
+    flag: new Image()
 };
 
 // Загрузка текстур
@@ -27,7 +27,7 @@ function loadTextures() {
     textures.caterpillar.src = 'assets/images/caterpillar.png';
     textures.platform.src = 'assets/images/platform.png';
     textures.background.src = 'assets/images/background.png';
-    textures.flag.src = 'assets/images/flag.png'; // Загружаем текстуру флага
+    textures.flag.src = 'assets/images/flag.png';
     
     return Promise.all([
         new Promise(resolve => { textures.player.timon.onload = resolve; }),
@@ -36,10 +36,9 @@ function loadTextures() {
         new Promise(resolve => { textures.caterpillar.onload = resolve; }),
         new Promise(resolve => { textures.platform.onload = resolve; }),
         new Promise(resolve => { textures.background.onload = resolve; }),
-        new Promise(resolve => { textures.flag.onload = resolve; }) // Ожидаем загрузку флага
+        new Promise(resolve => { textures.flag.onload = resolve; })
     ]);
 }
-
 
 // Игровые переменные
 const player = {
@@ -62,6 +61,7 @@ const player = {
 let platforms = [];
 let hyenas = [];
 let caterpillars = [];
+let spikes = []; // Массив для шипов
 let gameTime = 0;
 let isPaused = false;
 let gameOver = false;
@@ -72,11 +72,14 @@ let keys = {};
 let bgMusic = document.getElementById('bgMusic');
 let gameStartTime = 0;
 let texturesLoaded = false;
+
 // Константы
 const GRAVITY = 0.5;
 const HYENA_SPAWN_RATE = 3000;
 const CATERPILLAR_SPAWN_RATE = 5000;
 const GROUND_LEVEL = 450;
+const SPIKE_DAMAGE = 20; // Урон от шипов
+const SPIKE_KNOCKBACK = -12; // Отбрасывание при ударе о шипы
 
 // Финиш
 const finish = {
@@ -86,9 +89,7 @@ const finish = {
     height: 100
 };
 
-
-
-// Локальное хранилище результатов (без изменений)
+// Локальное хранилище результатов
 const GameStorage = {
     saveResult(result) {
         const results = this.getResults();
@@ -115,16 +116,35 @@ const GameStorage = {
     }
 };
 
-// Генерация платформ с финишем
+// Генерация платформ с шипами
 function generatePlatforms() {
     platforms = [];
+    spikes = [];
+    
     for (let i = 0; i < 15; i++) {
-        platforms.push({
+        const platform = {
             x: i * 300 + Math.random() * 200,
             y: 300 + Math.random() * 100,
             width: 100 + Math.random() * 100,
             height: 20
-        });
+        };
+        platforms.push(platform);
+        
+        // 30% chance to add spikes to platform
+        if (Math.random() < 0.3) {
+            const spikeCount = Math.floor(2 + Math.random() * 3); // 2-4 шипа
+            const spikeWidth = platform.width / spikeCount;
+            
+            for (let j = 0; j < spikeCount; j++) {
+                spikes.push({
+                    x: platform.x + j * spikeWidth,
+                    y: platform.y - 15, // Шипы торчат из платформы
+                    width: spikeWidth,
+                    height: 15,
+                    platformIndex: i // Ссылка на платформу
+                });
+            }
+        }
     }
     
     // Устанавливаем позицию финиша после последней платформы
@@ -132,7 +152,7 @@ function generatePlatforms() {
     finish.x = lastPlatform.x + lastPlatform.width + 200;
 }
 
-// Основной игровой цикл (без изменений)
+// Основной игровой цикл
 function gameLoop() {
     if (gameOver) return;
     
@@ -144,7 +164,7 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Обновление игрового состояния (без изменений)
+// Обновление игрового состояния
 function updateGame() {
     handleMovement();
     
@@ -158,12 +178,13 @@ function updateGame() {
     }
     
     checkPlatformCollision();
+    checkSpikesCollision(); // Проверка столкновений с шипами
     spawnEnemies();
     checkCollisions();
     updateCamera();
 }
 
-// Обработка движения игрока (без изменений)
+// Обработка движения игрока
 function handleMovement() {
     if (player.isHidden) return;
     
@@ -185,7 +206,7 @@ function handleMovement() {
     }
 }
 
-// Проверка столкновений с платформами (без изменений)
+// Проверка столкновений с платформами
 function checkPlatformCollision() {
     for (let platform of platforms) {
         if (player.x < platform.x + platform.width &&
@@ -200,7 +221,32 @@ function checkPlatformCollision() {
     }
 }
 
-// Спавн врагов (без изменений)
+// Проверка столкновений с шипами
+function checkSpikesCollision() {
+    for (let i = 0; i < spikes.length; i++) {
+        const spike = spikes[i];
+        
+        if (!player.invulnerable && !player.isHidden &&
+            player.x < spike.x + spike.width &&
+            player.x + player.width > spike.x &&
+            player.y < spike.y + spike.height &&
+            player.y + player.height > spike.y) {
+            
+            player.HP = Math.max(0, player.HP - SPIKE_DAMAGE);
+            updateHPDisplay();
+            player.invulnerable = true;
+            setTimeout(() => { player.invulnerable = false; }, 1000);
+            
+            // Отбрасывание игрока
+            player.velocityY = SPIKE_KNOCKBACK;
+            player.y += player.velocityY;
+            
+            if (player.HP <= 0) endGame(false);
+        }
+    }
+}
+
+// Спавн врагов
 function spawnEnemies() {
     const now = Date.now();
     
@@ -229,7 +275,7 @@ function spawnEnemies() {
     }
 }
 
-// Проверка столкновений с врагами (без изменений)
+// Проверка столкновений с врагами
 function checkCollisions() {
     // Гиены
     for (let i = 0; i < hyenas.length; i++) {
@@ -289,7 +335,7 @@ function updateCamera() {
     }
 }
 
-// Отрисовка игры с финишем
+// Отрисовка игры
 function drawGame() {
     // Очистка canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -310,7 +356,7 @@ function drawGame() {
     ctx.drawImage(textures.background, 
                  (-cameraOffset % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
     
-    // Земля (просто коричневая, без текстуры)
+    // Земля
     ctx.fillStyle = '#8B4513';
     ctx.fillRect(0, GROUND_LEVEL, canvas.width, canvas.height - GROUND_LEVEL);
     
@@ -320,6 +366,33 @@ function drawGame() {
             const platformPattern = ctx.createPattern(textures.platform, 'repeat');
             ctx.fillStyle = platformPattern;
             ctx.fillRect(platform.x - cameraOffset, platform.y, platform.width, platform.height);
+        }
+    });
+    
+    // Шипы (рисуем треугольниками)
+    spikes.forEach(spike => {
+        if (spike.x + spike.width > cameraOffset && spike.x < cameraOffset + canvas.width) {
+            const x = spike.x - cameraOffset;
+            const y = spike.y;
+            const width = spike.width;
+            const height = spike.height;
+            
+            ctx.fillStyle = '#A0A0A0';
+            ctx.beginPath();
+            ctx.moveTo(x, y + height);
+            ctx.lineTo(x + width / 2, y);
+            ctx.lineTo(x + width, y + height);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Добавляем металлический блик
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(x + width * 0.3, y + height * 0.7);
+            ctx.lineTo(x + width * 0.5, y + height * 0.3);
+            ctx.lineTo(x + width * 0.7, y + height * 0.7);
+            ctx.closePath();
+            ctx.fill();
         }
     });
     
@@ -336,7 +409,7 @@ function drawGame() {
             flagHeight
         );
 
-        // Отрисовка надписи "ФИНИШ" над флагом
+        // Отрисовка надписи "ФИНИШ"
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(
             finish.x - cameraOffset - 10,
@@ -364,7 +437,7 @@ function drawGame() {
         }
     });
     
-    // Гиены с текстурой (всегда зеркальные)
+    // Гиены с текстурой (зеркальные)
     hyenas.forEach(hyena => {
         if (hyena.x + hyena.width > cameraOffset && hyena.x < cameraOffset + canvas.width) {
             ctx.save();
@@ -376,7 +449,7 @@ function drawGame() {
         }
     });
     
-    // Игрок с текстурой (без анимации)
+    // Игрок
     if (!player.isHidden) {
         const playerImg = textures.player[player.character] || textures.player.timon;
         
@@ -403,7 +476,7 @@ function drawGame() {
     }
 }
 
-// Обновление таймера (без изменений)
+// Обновление таймера
 function updateTimer() {
     if (!isPaused && !gameOver) {
         gameTime = Math.floor((Date.now() - gameStartTime) / 1000);
@@ -414,14 +487,14 @@ function updateTimer() {
     }
 }
 
-// Обновление отображения HP (без изменений)
+// Обновление отображения HP
 function updateHPDisplay() {
     const hpFill = document.querySelector('.hp-fill');
     hpFill.style.width = `${player.HP}%`;
     hpFill.style.backgroundColor = player.HP > 50 ? '#4CAF50' : player.HP > 20 ? '#FFC107' : '#F44336';
 }
 
-// Завершение игры (без изменений)
+// Завершение игры
 function endGame(success) {
     gameOver = true;
     bgMusic.pause();
@@ -445,7 +518,7 @@ function endGame(success) {
     }, 1500);
 }
 
-// Обработка клавиш (без изменений)
+// Обработка клавиш
 document.addEventListener('keydown', (e) => {
     keys[e.key] = true;
     
@@ -463,7 +536,7 @@ document.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
-// Инициализация игры (без изменений)
+// Инициализация игры
 function initGame() {
     player.name = localStorage.getItem('playerName') || 'Игрок';
     player.character = localStorage.getItem('character') || 'timon';
