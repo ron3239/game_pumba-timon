@@ -536,6 +536,7 @@ document.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
+
 // Инициализация игры
 function initGame() {
     player.name = localStorage.getItem('playerName') || 'Игрок';
